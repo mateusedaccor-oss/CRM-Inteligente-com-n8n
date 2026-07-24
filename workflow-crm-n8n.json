@@ -1,0 +1,1054 @@
+{
+  "name": "CRM com PostgreSQL (Principal)",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -432,
+        64
+      ],
+      "id": "288b34e0-f976-4891-b6b7-7574863c1dd3",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "FZrYbBfMJAinHLZY",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.message.text}}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Você é um assistente de atendimento inteligente responsável por analisar as mensagens dos clientes, classificá-las e direcioná-las para o setor correto.\n\nSua tarefa é preencher os campos solicitados pelo sistema com base nas seguintes regras de negócio:\n\n1. CLASSIFICAÇÃO:\n- Defina a prioridade/classificação do atendimento como: \"alta\", \"média\" ou \"baixa\".\n\n2. DEFINIÇÃO DO SETOR RESPONSÁVEL:\nIdentifique e defina o setor com base no contexto:\n- compras, orçamento, interesse em produtos/serviços → \"vendas\"\n- problemas, erros, bugs, suporte técnico → \"suporte\"\n- cobrança, pagamento, boleto, nota fiscal, valores errados → \"financeiro\"\n- insatisfação, reclamações severas, cancelamento de plano/contrato → \"ouvidoria\"\n\n3. REGRAS PARA O CAMPO \"RESPOSTA\" (Personalizada e Humanizada):\n- Use um tom cordial e profissional.\n- Chame o cliente pelo nome sempre que ele for fornecido.\n- NUNCA informe que você é uma inteligência artificial.\n- A resposta deve ter entre 1 e 3 frases, soar natural e variar conforme o setor identificado:\n\n* Setor vendas: Agradeça o interesse e demonstre disposição para ajudar na compra. No final, inclua UMA pergunta complementar sobre a necessidade dele (Ex: uso principal, faixa de orçamento, características).\n* Setor suporte: Demonstre preocupação com o erro e informe que a equipe técnica fará a análise. No final, inclua UMA pergunta complementar pedindo detalhes (Ex: modelo, quando começou, descrição do erro).\n* Setor financeiro: Informe que a situação financeira/cobrança será analisada. No final, inclua UMA pergunta complementar (Ex: número da cobrança, data da transação, detalhes do ocorrido).\n* Setor ouvidoria: Demonstre profunda empatia e prioridade. No final, inclua UMA pergunta complementar para entender a insatisfação (Ex: o que motivou, detalhes do ocorrido).\n\nAtenção: Siga estritamente a estrutura de campos fornecida pelo Output Parser do sistema."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -208,
+        -192
+      ],
+      "id": "c89b0df2-a465-4fe8-8afa-04b6aadafd0d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"nome\": \"João\",\n  \"interesse\": \"comprar notebook\",\n  \"classificacao\": \"alta\",\n  \"setor\": \"vendas\",\n  \"resposta\": \"Olá João! Recebemos sua solicitação e retornaremos em breve.\"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -96,
+        64
+      ],
+      "id": "e45f30a6-619c-4800-9425-d8ab05cf7fdf",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -832,
+        -112
+      ],
+      "id": "b4a1175d-3e57-44d9-9ac5-77c1dbe0e4b7",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.setor }}",
+                    "rightValue": "vendas",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "e065778d-e686-48f4-9083-e4bde62cbcca"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c2b7c2ba-1790-4475-8b69-6cdebdb2f499",
+                    "leftValue": "={{ $json.output.setor }}",
+                    "rightValue": "suporte",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "472910d0-8799-42ba-8fa6-38ac48b7982e",
+                    "leftValue": "={{ $json.output.setor }}",
+                    "rightValue": "financeiro",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "21e5ba47-a6e0-4e70-9719-ee78d48d9925",
+                    "leftValue": "={{ $json.output.setor }}",
+                    "rightValue": "ouvidoria",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        -80
+      ],
+      "id": "760fde10-6bd7-4f59-a7c6-7ccdb3dc0b1d",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "vendas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome": "={{ $json.output.nome }}",
+            "interesse": "={{ $json.output.interesse }}",
+            "data": "={{ $now.toFormat('dd-MM-yyyy') }}",
+            "classificacao": "={{ $json.output.classificacao }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interesse",
+              "displayName": "interesse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "classificacao",
+              "displayName": "classificacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "setor",
+              "displayName": "setor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        656,
+        -272
+      ],
+      "id": "660b852f-7669-4204-a0a8-cd1929adcc41",
+      "name": "Append row (vendas)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gKSGF3HtYssbi4vQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 463523232,
+          "mode": "list",
+          "cachedResultName": "suporte",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit#gid=463523232"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome": "={{ $json.output.nome }}",
+            "interesse": "={{ $json.output.interesse }}",
+            "data": "={{ $now.toFormat('dd-MM-yyyy') }}",
+            "classificacao": "={{ $json.output.classificacao }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interesse",
+              "displayName": "interesse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "classificacao",
+              "displayName": "classificacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "setor",
+              "displayName": "setor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        656,
+        -112
+      ],
+      "id": "b438a6a6-ca13-4d2e-b301-93df4a0f93bc",
+      "name": "Append row (suporte)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gKSGF3HtYssbi4vQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 121401634,
+          "mode": "list",
+          "cachedResultName": "financeiro",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit#gid=121401634"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome": "={{ $json.output.nome }}",
+            "interesse": "={{ $json.output.interesse }}",
+            "data": "={{ $now.toFormat('dd-MM-yyyy') }}",
+            "classificacao": "={{ $json.output.classificacao }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interesse",
+              "displayName": "interesse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "classificacao",
+              "displayName": "classificacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "setor",
+              "displayName": "setor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        656,
+        48
+      ],
+      "id": "962e160b-879c-4d49-b174-234cbc004f76",
+      "name": "Append row (financeiro)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gKSGF3HtYssbi4vQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1631106837,
+          "mode": "list",
+          "cachedResultName": "ouvidoria",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit#gid=1631106837"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome": "={{ $json.output.nome }}",
+            "interesse": "={{ $json.output.interesse }}",
+            "data": "={{ $now.toFormat('dd-MM-yyyy') }}",
+            "classificacao": "={{ $json.output.classificacao }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interesse",
+              "displayName": "interesse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "classificacao",
+              "displayName": "classificacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "setor",
+              "displayName": "setor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        656,
+        208
+      ],
+      "id": "880f7043-1efe-4958-a370-af6956809a8a",
+      "name": "Append row (ouvidoria)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gKSGF3HtYssbi4vQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "mateus.edu.labs@gmail.com",
+        "subject": "⚠️ Cliente Crítico - Ouvidoria",
+        "message": "=<h2>⚠️ Cliente Crítico Detectado</h2>\n\n<p><strong>Nome:</strong> {{$json.nome}}</p>\n\n<p><strong>Interesse:</strong> {{$json.interesse}}</p>\n\n<p><strong>Classificação:</strong> {{$json.classificacao}}</p>\n\n<p><strong>Data:</strong> {{$json.data}}</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        864,
+        208
+      ],
+      "id": "ff2ce513-b02a-4e0e-897b-46d362fa2dcf",
+      "name": "Send a message",
+      "webhookId": "02b8de2f-e1cd-4fdc-8ff2-6c03c76f6051",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ugN6k8CuTM5FFrhu",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "atendimentos",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome": "={{$json.output.nome}}",
+            "interesse": "={{$json.output.interesse}}",
+            "classificacao": "={{$json.output.classificacao}}",
+            "setor": "={{$json.output.setor}}",
+            "resposta": "={{$json.output.resposta}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interesse",
+              "displayName": "interesse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "classificacao",
+              "displayName": "classificacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "setor",
+              "displayName": "setor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resposta",
+              "displayName": "resposta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_criacao",
+              "displayName": "data_criacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        176,
+        -272
+      ],
+      "id": "49fe9684-e4bf-4427-803d-635c53b14de5",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "8pbCdY3n4iIgE9uy",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.4,
+      "position": [
+        -240,
+        64
+      ],
+      "id": "ffcab88d-38b5-4df3-b5b0-9380714d1077",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "8pbCdY3n4iIgE9uy",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1920843608,
+          "mode": "list",
+          "cachedResultName": "geral",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lrXlgjAIfSQkUMHPG6s7LW0ULCq2cN16kTVhphQ4lNI/edit#gid=1920843608"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome": "={{ $json.nome }}",
+            "interesse": "={{ $json.interesse }}",
+            "classificacao": "={{ $json.classificacao }}",
+            "setor": "={{ $json.setor }}",
+            "data": "={{ $now.toFormat('dd-MM-yyyy') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interesse",
+              "displayName": "interesse",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "classificacao",
+              "displayName": "classificacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "setor",
+              "displayName": "setor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        -272
+      ],
+      "id": "6c65fda4-eb50-4c8b-82b4-c0d9d1a8445f",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gKSGF3HtYssbi4vQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        16,
+        192
+      ],
+      "id": "2f676828-2451-4c5a-a6e2-164aea6b57c8",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "FZrYbBfMJAinHLZY",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output.resposta }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        48
+      ],
+      "id": "25b6ff9d-2e2a-458d-98b6-3989bee9cf53",
+      "name": "Send a text message",
+      "webhookId": "4e17d0a1-3126-4ee9-add2-f302fe96145f",
+      "credentials": {
+        "telegramApi": {
+          "id": "oHu7rV6EpVmbjHtF",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -464,
+        -192
+      ],
+      "id": "f8a47b7d-6ac7-4c85-b6d1-a469bcaf5936",
+      "name": "Telegram Trigger",
+      "webhookId": "f52445c3-b82f-4d50-88cf-3bc2705672d0",
+      "credentials": {
+        "telegramApi": {
+          "id": "oHu7rV6EpVmbjHtF",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Append row (vendas)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row (suporte)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row (financeiro)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row (ouvidoria)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row (ouvidoria)": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row (vendas)": {
+      "main": [
+        []
+      ]
+    },
+    "Append row (suporte)": {
+      "main": [
+        []
+      ]
+    },
+    "Append row (financeiro)": {
+      "main": [
+        []
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6dc6992e-f933-4c56-a3fb-3f17929f5a3c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1a0610f9625c2ecf4cc9fe0efbc3e7b36d75e17eef5e37950aec40f3aada6797"
+  },
+  "id": "WBUZb6xiBIztk6wB",
+  "tags": [
+    {
+      "updatedAt": "2026-07-22T20:02:47.484Z",
+      "createdAt": "2026-07-22T20:02:47.484Z",
+      "id": "Ltkg9BUkDo36c8OQ",
+      "name": "projeto pessoal"
+    }
+  ]
+}
